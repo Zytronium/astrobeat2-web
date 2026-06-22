@@ -151,7 +151,7 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
     };
 
     return (
-        <section className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur">
+        <section className="rounded-3xl border border-cyan-500/30 bg-blue-950/40 backdrop-blur-xl shadow-xl shadow-purple-500/20 p-5">
             <audio
                 ref={audioRef}
                 preload="metadata"
@@ -181,13 +181,13 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
 
             <div className="flex flex-col gap-3">
                 <div className="min-w-0">
-                    <div className="text-xs uppercase tracking-wide text-white/50">
+                    <div className="text-xs uppercase tracking-wide text-cyan-300/70">
                         Now playing
                     </div>
-                    <div className="truncate text-lg font-medium text-white">
+                    <div className="truncate text-lg font-medium text-white drop-shadow-[0_0_10px_rgba(0,200,255,0.6)]">
                         {currentTrack ? currentTrack.title : "Nothing selected"}
                     </div>
-                    <div className="truncate text-sm text-white/60">
+                    <div className="truncate text-sm text-blue-200/70">
                         {currentTrack?.artist || "Choose a track to start"}
                     </div>
                 </div>
@@ -200,7 +200,7 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
 
             <div className="mt-6 flex flex-col gap-5">
 
-                <div className="flex items-center gap-3 text-sm text-white/60">
+                <div className="flex items-center gap-3 text-sm text-blue-200/60">
     <span className="w-10 text-right">
       {formatTime(currentTime)}
     </span>
@@ -211,7 +211,7 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                         max={duration || 0}
                         value={currentTime}
                         onChange={(e) => seek(Number(e.target.value))}
-                        className="flex-1 accent-white"
+                        className="flex-1 accent-cyan-400"
                     />
 
                     <span className="w-10">
@@ -229,8 +229,8 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                             onClick={() => setShuffle(!shuffle)}
                             className={`rounded-full border px-4 py-3 transition ${
                                 shuffle
-                                    ? "border-white bg-white text-black"
-                                    : "border-white/10 bg-black/30 text-white hover:bg-white/10"
+                                    ? "border-cyan-300 bg-cyan-400/20 text-cyan-300 shadow-[0_0_20px_rgba(0,200,255,0.6)]"
+                                    : "border-cyan-400/30 bg-blue-950/60 text-cyan-200 hover:bg-cyan-500/20 hover:text-white"
                             }`}
                         >
                             <MdShuffle size={20} />
@@ -247,7 +247,7 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                         <button
                             onClick={() => void togglePlay()}
                             disabled={busy || tracks.length === 0}
-                            className="rounded-full bg-white px-6 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-40"
+                            className="rounded-full bg-linear-to-br from-cyan-400 to-purple-600 text-white shadow-lg shadow-cyan-500/40 hover:brightness-110 px-6 py-3 font-medium hover:bg-white/90 disabled:opacity-40"
                         >
                             {isPlaying ? (
                                 <MdPause size={24} />
@@ -268,8 +268,8 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                             onClick={() => setLoop(!loop)}
                             className={`rounded-full border px-4 py-3 transition ${
                                 loop
-                                    ? "border-white bg-white text-black"
-                                    : "border-white/10 bg-black/30 text-white hover:bg-white/10"
+                                    ? "border-cyan-300 bg-cyan-400/20 text-cyan-300 shadow-[0_0_20px_rgba(0,200,255,0.6)]"
+                                    : "border-cyan-400/30 bg-blue-950/60 text-cyan-200 hover:bg-cyan-500/20 hover:text-white"
                             }`}
                         >
                             <MdRepeat size={20} />
@@ -280,7 +280,7 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                     <select
                         value={speed}
                         onChange={(e) => changeSpeed(Number(e.target.value))}
-                        className="w-20 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-white"
+                        className="w-20 rounded-xl border border-purple-400/30 bg-blue-950/60 text-cyan-100 px-3 py-2"
                     >
                         <option value={0.5}>0.5×</option>
                         <option value={0.75}>0.75×</option>
@@ -305,20 +305,20 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                                 className={[
                                     "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition",
                                     active
-                                        ? "border-white/20 bg-white/10"
-                                        : "border-white/10 bg-black/20 hover:bg-black/30",
+                                        ? "border-cyan-400/60 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 shadow-lg shadow-cyan-500/20"
+                                        : "border-cyan-500/20 bg-blue-950/25 hover:bg-cyan-500/10",
                                 ].join(" ")}
                             >
                                 <div className="min-w-0">
-                                    <div className="truncate text-sm font-medium text-white">
+                                    <div className="truncate text-sm font-medium text-cyan-50">
                                         {track.title}
                                     </div>
-                                    <div className="truncate text-xs text-white/55">
+                                    <div className="truncate text-xs text-blue-200/70">
                                         {track.artist || "Unknown artist"}
                                         {track.album ? ` • ${track.album}` : ""}
                                     </div>
                                 </div>
-                                <div className="ml-4 shrink-0 text-xs text-white/40">
+                                <div className="ml-4 shrink-0 text-xs text-purple-200/70">
                                     {track.durationSecs ? `${Math.round(track.durationSecs)}s` : "—"}
                                 </div>
                             </button>

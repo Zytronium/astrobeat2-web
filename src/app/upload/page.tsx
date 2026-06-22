@@ -50,11 +50,9 @@ export default function UploadPage() {
         setStatus("idle");
         setProgress(0);
 
-        // Revoke old blob URL before creating a new one
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(f));
 
-        // Pre-fill title from filename if blank
         if (!meta.title) {
             const name = f.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ");
             setMeta((m) => ({ ...m, title: m.title || name }));
@@ -64,7 +62,7 @@ export default function UploadPage() {
     function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
         const f = e.target.files?.[0];
         if (f) applyFile(f);
-        e.target.value = ""; // reset so the same file can be re-selected
+        e.target.value = "";
     }
 
     const handleDrop = useCallback((e: React.DragEvent) => {
@@ -112,7 +110,6 @@ export default function UploadPage() {
         setErrorMsg("");
 
         try {
-            // 1. Get presigned URL
             const presignRes = await fetch("/api/upload/presign", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -126,7 +123,6 @@ export default function UploadPage() {
             if (!presignRes.ok) throw new Error("Failed to get upload URL");
             const { uploadUrl, r2Key } = await presignRes.json();
 
-            // 2. Upload to R2 with XHR so we get progress events
             await new Promise<void>((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 xhr.open("PUT", uploadUrl);
@@ -144,7 +140,6 @@ export default function UploadPage() {
             setProgress(100);
             setStatus("saving");
 
-            // 3. Save metadata to Neon via your existing POST /api/tracks
             const saveRes = await fetch("/api/tracks", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -165,7 +160,6 @@ export default function UploadPage() {
 
             setStatus("done");
 
-            // Reset after a moment
             setTimeout(() => {
                 setFile(null);
                 if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -174,7 +168,6 @@ export default function UploadPage() {
                 setStatus("idle");
                 setProgress(0);
             }, 2500);
-
         } catch (err) {
             setErrorMsg(err instanceof Error ? err.message : "Upload failed");
             setStatus("error");
@@ -186,26 +179,26 @@ export default function UploadPage() {
         router.push("/login");
     }
 
-    // -------- render helpers --------
     const busy = status === "uploading" || status === "saving";
 
     return (
-        <main style={{
-            minHeight: "100vh",
-            background: "#0a0a0f",
-            color: "#e2e2e8",
-            fontFamily: "system-ui, sans-serif",
-            padding: "2rem 1rem",
-        }}>
-            <div style={{ maxWidth: 640, margin: "0 auto" }}>
+        <main className="min-h-screen bg-gradient-to-br from-blue-950 via-blue-950 to-purple-950 px-4 py-6 sm:px-6">
+            <div className="mx-auto max-w-2xl">
 
                 {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+                <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-cyan-400/30 bg-blue-950/40 shadow-lg shadow-cyan-500/20 p-5 backdrop-blur sm:flex-row sm:items-end sm:justify-between">
                     <div>
-                        <h1 style={{ margin: 0, fontSize: "1.5rem", color: "#fff" }}>Astrobeat 2</h1>
-                        <p style={{ margin: 0, fontSize: "0.8rem", color: "#555" }}>Upload a track</p>
+                        <h1 className="text-2xl font-semibold tracking-tight bg-linear-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent">
+                            Upload track
+                        </h1>
+                        <p className="text-sm text-blue-200/70">Add audio to your library</p>
                     </div>
-                    <button onClick={handleLogout} style={ghostBtn}>Sign out</button>
+                    <button
+                        onClick={handleLogout}
+                        className="rounded-xl border border-cyan-400/30 bg-blue-950/60 px-4 py-2 text-sm font-medium text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                    >
+                        Sign out
+                    </button>
                 </div>
 
                 {/* Drop zone */}
@@ -214,139 +207,117 @@ export default function UploadPage() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onClick={() => !file && fileInputRef.current?.click()}
-                    style={{
-                        border: `2px dashed ${dragging ? "#6366f1" : file ? "#3a3a5a" : "#2a2a3a"}`,
-                        borderRadius: 12,
-                        padding: "2rem",
-                        textAlign: "center",
-                        cursor: file ? "default" : "pointer",
-                        background: dragging ? "#13132a" : "#0f0f18",
-                        transition: "all 0.15s",
-                        marginBottom: "1.5rem",
-                    }}
+                    className={[
+                        "mb-6 flex flex-col items-center justify-center rounded-2xl border-2 p-8 text-center transition",
+                        dragging
+                            ? "border-cyan-400 bg-cyan-500/10 backdrop-blur"
+                            : file
+                                ? "border-cyan-400/30 bg-blue-950/40 backdrop-blur"
+                                : "border-dashed border-cyan-400/30 bg-blue-950/20 hover:border-cyan-400/60",
+                    ].join(" ")}
                 >
                     <input
                         ref={fileInputRef}
                         type="file"
                         accept="audio/*"
                         onChange={handleFileInput}
-                        style={{ display: "none" }}
+                        className="hidden"
                     />
 
                     {file ? (
                         <div>
-                            <p style={{ margin: "0 0 0.25rem", color: "#a5b4fc", fontWeight: 500 }}>{file.name}</p>
-                            <p style={{ margin: 0, fontSize: "0.8rem", color: "#555" }}>
+                            <p className="mb-2 text-sm font-medium text-cyan-300">{file.name}</p>
+                            <p className="text-xs text-blue-300/60">
                                 {(file.size / 1024 / 1024).toFixed(1)} MB - {file.type}
                             </p>
                             <button
-                                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                                style={{ ...ghostBtn, marginTop: "0.75rem", fontSize: "0.8rem" }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                }}
+                                className="mt-3 rounded-lg border border-cyan-400/40 bg-cyan-500/10 px-3 py-1.5 text-xs font-medium text-cyan-300 transition hover:bg-cyan-500/20 hover:text-cyan-100"
                             >
                                 Replace file
                             </button>
                         </div>
                     ) : (
                         <div>
-                            <p style={{ margin: "0 0 0.25rem", color: "#666", fontSize: "0.95rem" }}>
-                                Drop an audio file here
-                            </p>
-                            <p style={{ margin: 0, fontSize: "0.8rem", color: "#444" }}>
-                                or click to browse
-                            </p>
+                            <p className="mb-1 text-blue-200">Drop audio file here</p>
+                            <p className="text-xs text-blue-300/60">or click to browse</p>
                         </div>
                     )}
                 </div>
 
                 {/* Preview player */}
                 {previewUrl && (
-                    <div style={{
-                        background: "#13131a",
-                        border: "1px solid #2a2a3a",
-                        borderRadius: 10,
-                        padding: "1rem",
-                        marginBottom: "1.5rem",
-                    }}>
-                        <p style={{ margin: "0 0 0.5rem", fontSize: "0.75rem", color: "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                            Preview
-                        </p>
+                    <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-cyan-500/30 bg-blue-950/40 p-4 backdrop-blur">
+                        <div className="text-xs uppercase tracking-widest text-cyan-300/70">Preview</div>
                         <audio
                             ref={audioRef}
                             src={previewUrl}
                             controls
-                            style={{ width: "100%", accentColor: "#6366f1" }}
+                            className="w-full accent-cyan-400"
                         />
                     </div>
                 )}
 
                 {/* Metadata fields */}
                 {file && (
-                    <div style={{
-                        background: "#13131a",
-                        border: "1px solid #2a2a3a",
-                        borderRadius: 10,
-                        padding: "1.25rem",
-                        marginBottom: "1.5rem",
-                        display: "grid",
-                        gap: "1rem",
-                    }}>
-                        <Field label="Title *" value={meta.title} onChange={(v) => setMeta((m) => ({ ...m, title: v }))} placeholder="Track title" />
-                        <Field label="Artist" value={meta.artist} onChange={(v) => setMeta((m) => ({ ...m, artist: v }))} placeholder="Artist name" />
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
-                            <Field label="Album" value={meta.album} onChange={(v) => setMeta((m) => ({ ...m, album: v }))} placeholder="Album name" />
-                            <Field label="Genre" value={meta.genre} onChange={(v) => setMeta((m) => ({ ...m, genre: v }))} placeholder="e.g. Electronic" />
+                    <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-cyan-500/30 bg-blue-950/40 p-5 backdrop-blur">
+                        <Field
+                            label="Title *"
+                            value={meta.title}
+                            onChange={(v) => setMeta((m) => ({ ...m, title: v }))}
+                            placeholder="Track title"
+                        />
+                        <Field
+                            label="Artist"
+                            value={meta.artist}
+                            onChange={(v) => setMeta((m) => ({ ...m, artist: v }))}
+                            placeholder="Artist name"
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <Field
+                                label="Album"
+                                value={meta.album}
+                                onChange={(v) => setMeta((m) => ({ ...m, album: v }))}
+                                placeholder="Album"
+                            />
+                            <Field
+                                label="Genre"
+                                value={meta.genre}
+                                onChange={(v) => setMeta((m) => ({ ...m, genre: v }))}
+                                placeholder="Genre"
+                            />
                         </div>
 
                         {/* Tags */}
                         <div>
-                            <label style={labelStyle}>Tags</label>
-                            <div style={{
-                                display: "flex",
-                                flexWrap: "wrap",
-                                gap: "0.4rem",
-                                padding: "0.5rem",
-                                background: "#0a0a0f",
-                                border: "1px solid #2a2a3a",
-                                borderRadius: 8,
-                                minHeight: 42,
-                            }}>
+                            <label className="mb-2 block text-xs uppercase tracking-widest text-cyan-300/70">
+                                Tags
+                            </label>
+                            <div className="flex flex-wrap gap-2 rounded-xl border border-cyan-500/20 bg-blue-950/60 p-3">
                                 {meta.tags.map((tag) => (
-                                    <span key={tag} style={{
-                                        background: "#1e1e3a",
-                                        color: "#a5b4fc",
-                                        border: "1px solid #3a3a6a",
-                                        borderRadius: 20,
-                                        padding: "0.2rem 0.6rem",
-                                        fontSize: "0.78rem",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        gap: "0.35rem",
-                                    }}>
-                    {tag}
+                                    <div
+                                        key={tag}
+                                        className="flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-500/20 px-3 py-1 text-xs font-medium text-cyan-200"
+                                    >
+                                        {tag}
                                         <button
                                             onClick={() => removeTag(tag)}
-                                            style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", padding: 0, fontSize: "0.9rem", lineHeight: 1 }}
+                                            className="ml-1 font-bold text-cyan-300 hover:text-cyan-100"
                                         >
-                      x
-                    </button>
-                  </span>
+                                            x
+                                        </button>
+                                    </div>
                                 ))}
                                 <input
                                     value={meta.tagInput}
                                     onChange={(e) => setMeta((m) => ({ ...m, tagInput: e.target.value }))}
                                     onKeyDown={handleTagKeyDown}
                                     onBlur={addTag}
-                                    placeholder={meta.tags.length === 0 ? "Add tags (Enter or comma to add)" : ""}
-                                    style={{
-                                        flex: 1,
-                                        minWidth: 120,
-                                        background: "none",
-                                        border: "none",
-                                        outline: "none",
-                                        color: "#e2e2e8",
-                                        fontSize: "0.875rem",
-                                        padding: "0.1rem 0.25rem",
-                                    }}
+                                    placeholder={meta.tags.length === 0 ? "Add tags..." : ""}
+                                    className="flex-1 min-w-[120px] bg-transparent text-sm text-blue-100 placeholder-blue-400/40 outline-none"
                                 />
                             </div>
                         </div>
@@ -355,38 +326,31 @@ export default function UploadPage() {
 
                 {/* Progress bar */}
                 {(status === "uploading" || status === "saving") && (
-                    <div style={{ marginBottom: "1rem" }}>
-                        <div style={{
-                            background: "#1a1a2a",
-                            borderRadius: 999,
-                            height: 6,
-                            overflow: "hidden",
-                        }}>
-                            <div style={{
-                                height: "100%",
-                                width: `${status === "saving" ? 100 : progress}%`,
-                                background: "#6366f1",
-                                borderRadius: 999,
-                                transition: "width 0.2s",
-                            }} />
+                    <div className="mb-4">
+                        <div className="h-1.5 overflow-hidden rounded-full bg-blue-950/60">
+                            <div
+                                className="h-full bg-gradient-to-r from-cyan-400 to-cyan-500 rounded-full transition-all duration-200"
+                                style={{
+                                    width: `${status === "saving" ? 100 : progress}%`,
+                                }}
+                            />
                         </div>
-                        <p style={{ margin: "0.4rem 0 0", fontSize: "0.78rem", color: "#555" }}>
-                            {status === "saving" ? "Saving metadata..." : `Uploading... ${progress}%`}
+                        <p className="mt-2 text-xs text-blue-300/60">
+                            {status === "saving"
+                                ? "Saving metadata..."
+                                : `Uploading... ${progress}%`}
                         </p>
                     </div>
                 )}
 
                 {/* Status messages */}
                 {status === "done" && (
-                    <p style={{ color: "#4ade80", fontSize: "0.9rem", marginBottom: "1rem" }}>
+                    <p className="mb-4 text-sm font-medium text-emerald-400">
                         Track uploaded successfully!
                     </p>
                 )}
-                {status === "error" && errorMsg && (
-                    <p style={{ color: "#f87171", fontSize: "0.9rem", marginBottom: "1rem" }}>{errorMsg}</p>
-                )}
-                {status === "idle" && errorMsg && (
-                    <p style={{ color: "#f87171", fontSize: "0.9rem", marginBottom: "1rem" }}>{errorMsg}</p>
+                {(status === "error" || (status === "idle" && errorMsg)) && (
+                    <p className="mb-4 text-sm text-red-400">{errorMsg}</p>
                 )}
 
                 {/* Upload button */}
@@ -394,50 +358,32 @@ export default function UploadPage() {
                     <button
                         onClick={handleUpload}
                         disabled={busy || !meta.title}
-                        style={{
-                            width: "100%",
-                            padding: "0.85rem",
-                            background: busy ? "#2a2a3a" : status === "done" ? "#166534" : "#6366f1",
-                            color: busy ? "#555" : "#fff",
-                            border: "none",
-                            borderRadius: 10,
-                            fontSize: "1rem",
-                            fontWeight: 500,
-                            cursor: busy || !meta.title ? "default" : "pointer",
-                            transition: "background 0.15s",
-                        }}
+                        className={[
+                            "w-full rounded-xl px-6 py-3 font-medium transition",
+                            status === "done"
+                                ? "bg-emerald-500/40 text-emerald-200 border border-emerald-400/50"
+                                : busy
+                                    ? "bg-blue-950/60 text-blue-400/50 border border-blue-800/40 cursor-not-allowed"
+                                    : !meta.title
+                                        ? "bg-cyan-500/20 text-cyan-300/50 border border-cyan-400/20 cursor-not-allowed"
+                                        : "border border-cyan-400/40 bg-gradient-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-500/40 hover:brightness-110",
+                        ].join(" ")}
                     >
-                        {status === "uploading" ? `Uploading... ${progress}%` :
-                            status === "saving" ? "Saving..." :
-                                status === "done" ? "Done!" :
-                                    !meta.title ? "Add a title to upload" :
-                                        "Upload track"}
+                        {status === "uploading"
+                            ? `Uploading... ${progress}%`
+                            : status === "saving"
+                                ? "Saving..."
+                                : status === "done"
+                                    ? "Done!"
+                                    : !meta.title
+                                        ? "Add a title to upload"
+                                        : "Upload track"}
                     </button>
                 )}
             </div>
         </main>
     );
 }
-
-// -------- shared styles --------
-const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "0.75rem",
-    color: "#666",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    marginBottom: 6,
-};
-
-const ghostBtn: React.CSSProperties = {
-    background: "none",
-    border: "1px solid #2a2a3a",
-    color: "#666",
-    borderRadius: 8,
-    padding: "0.4rem 0.75rem",
-    cursor: "pointer",
-    fontSize: "0.875rem",
-};
 
 // -------- Field subcomponent --------
 function Field({
@@ -453,23 +399,15 @@ function Field({
 }) {
     return (
         <div>
-            <label style={labelStyle}>{label}</label>
+            <label className="mb-2 block text-xs uppercase tracking-widest text-cyan-300/70">
+                {label}
+            </label>
             <input
                 type="text"
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 placeholder={placeholder}
-                style={{
-                    width: "100%",
-                    padding: "0.6rem 0.75rem",
-                    background: "#0a0a0f",
-                    border: "1px solid #2a2a3a",
-                    borderRadius: 8,
-                    color: "#e2e2e8",
-                    fontSize: "0.9rem",
-                    boxSizing: "border-box",
-                    outline: "none",
-                }}
+                className="w-full rounded-lg border border-cyan-500/20 bg-blue-950/60 px-3 py-2.5 text-sm text-blue-50 placeholder-blue-400/40 transition focus:border-cyan-400/60 focus:bg-blue-950/80 focus:outline-none"
             />
         </div>
     );

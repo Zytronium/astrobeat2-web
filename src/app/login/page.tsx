@@ -38,48 +38,34 @@ function LoginForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
-            <label style={{ display: "block", color: "#999", fontSize: "0.8rem", marginBottom: 6 }}>
-                Password
-            </label>
-            <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoFocus
-                required
-                style={{
-                    width: "100%",
-                    padding: "0.65rem 0.75rem",
-                    background: "#0a0a0f",
-                    border: "1px solid #2a2a3a",
-                    borderRadius: 8,
-                    color: "#fff",
-                    fontSize: "1rem",
-                    boxSizing: "border-box",
-                    outline: "none",
-                }}
-            />
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div>
+                <label className="mb-2 block text-xs uppercase tracking-widest text-cyan-300/70">
+                    Password
+                </label>
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoFocus
+                    required
+                    className="w-full rounded-lg border border-cyan-500/20 bg-blue-950/60 px-3 py-2.5 text-sm text-blue-50 placeholder-blue-400/40 transition focus:border-cyan-400/60 focus:bg-blue-950/80 focus:outline-none"
+                />
+            </div>
 
             {error && (
-                <p style={{ color: "#f87171", fontSize: "0.8rem", margin: "0.5rem 0 0" }}>{error}</p>
+                <p className="text-xs text-red-400">{error}</p>
             )}
 
             <button
                 type="submit"
                 disabled={loading}
-                style={{
-                    marginTop: "1.25rem",
-                    width: "100%",
-                    padding: "0.7rem",
-                    background: loading ? "#2a2a3a" : "#6366f1",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: 8,
-                    fontSize: "1rem",
-                    cursor: loading ? "default" : "pointer",
-                    transition: "background 0.15s",
-                }}
+                className={[
+                    "rounded-lg px-4 py-2.5 font-medium transition",
+                    loading
+                        ? "bg-cyan-500/20 text-cyan-300/50 border border-cyan-400/20 cursor-not-allowed"
+                        : "border border-cyan-400/40 bg-linear-to-r from-cyan-500 to-cyan-600 text-white shadow-lg shadow-cyan-500/40 hover:brightness-110",
+                ].join(" ")}
             >
                 {loading ? "Signing in..." : "Sign in"}
             </button>
@@ -90,26 +76,16 @@ function LoginForm() {
 // -------- page (wraps form in Suspense) --------
 export default function LoginPage() {
     return (
-        <main style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "#0a0a0f",
-            fontFamily: "system-ui, sans-serif",
-        }}>
-            <div style={{
-                background: "#13131a",
-                border: "1px solid #2a2a3a",
-                borderRadius: 12,
-                padding: "2.5rem",
-                width: "100%",
-                maxWidth: 380,
-            }}>
-                <h1 style={{ color: "#fff", margin: "0 0 0.25rem", fontSize: "1.4rem" }}>Astrobeat 2</h1>
-                <p style={{ color: "#666", margin: "0 0 2rem", fontSize: "0.875rem" }}>Upload access only</p>
+        <main className="min-h-screen bg-linear-to-br from-blue-950 via-blue-950 to-purple-950 flex items-center justify-center px-4">
+            <div className="w-full max-w-sm rounded-2xl border border-cyan-400/30 bg-blue-950/40 shadow-lg shadow-cyan-500/20 p-8 backdrop-blur">
+                <div className="mb-8">
+                    <h1 className="text-2xl font-semibold tracking-tight bg-linear-to-r from-cyan-300 to-blue-200 bg-clip-text text-transparent">
+                        Astrobeat
+                    </h1>
+                    <p className="mt-1 text-sm text-blue-200/70">Upload access only</p>
+                </div>
 
-                <Suspense fallback={<p style={{ color: "#555", fontSize: "0.875rem" }}>Loading...</p>}>
+                <Suspense fallback={<p className="text-xs text-blue-300/60">Loading...</p>}>
                     <LoginForm />
                 </Suspense>
             </div>
