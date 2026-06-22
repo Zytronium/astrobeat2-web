@@ -1,21 +1,15 @@
-import { NextRequest } from "next/server";
 import { eq } from "drizzle-orm";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { db } from "@/db";
 import { tracks } from "@/db/schema";
 import { r2, R2_BUCKET } from "@/lib/r2";
-import { isAuthorized } from "@/lib/api-auth";
 
 // -------- GET /api/tracks/[id]/stream --------
 export async function GET(
-  req: NextRequest,
+  _req: unknown,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  if (!isAuthorized(req)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
 
   // Look up the track to get its R2 key
