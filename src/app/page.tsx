@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { tracks } from "@/db/schema";
 import TrackPlayer from "@/components/track-player";
 
+export const dynamic = "force-dynamic";
+
 type TrackRow = Awaited<ReturnType<typeof getTracks>>[number];
 
 async function getTracks() {
