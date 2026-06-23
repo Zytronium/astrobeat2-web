@@ -1,7 +1,15 @@
 import { NextRequest } from "next/server";
+import { unstable_cache, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { tracks } from "@/db/schema";
 import { isAuthorized } from "@/lib/api-auth";
+
+// -------- cached query --------
+const getCachedTracks = unstable_cache(
+    async () => db.select().from(tracks).orderBy(tracks.uploadedAt),
+    ["tracks"],
+    { tags: ["tracks"] }
+);
 
 // -------- GET /api/tracks --------
 export async function GET(req: NextRequest) {
@@ -10,7 +18,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const rows = await db.select().from(tracks).orderBy(tracks.uploadedAt);
+    const rows = await getCachedTracks();
     return Response.json(rows);
   } catch (err) {
     console.error("GET /api/tracks error:", err);
@@ -72,6 +80,7 @@ export async function POST(req: NextRequest) {
       })
       .returning({ id: tracks.id });
 
+    revalidateTag("tracks", "max"); // bust the tracks cache on new upload
     return Response.json({ id: inserted.id }, { status: 201 });
   } catch (err) {
     console.error("POST /api/tracks error:", err);
