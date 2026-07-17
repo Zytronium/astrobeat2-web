@@ -5,7 +5,7 @@ import { eq, and } from "drizzle-orm";
 
 export async function GET(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
     try {
@@ -27,7 +27,7 @@ export async function GET(
 
 export async function POST(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const { id: playlistId } = await params;
     try {
@@ -51,7 +51,7 @@ export async function POST(
 
 export async function DELETE(
     request: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const { id: playlistId } = await params;
     try {

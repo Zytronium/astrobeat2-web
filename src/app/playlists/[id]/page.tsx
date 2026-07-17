@@ -26,7 +26,7 @@ async function getPlaylistTracks(playlistId: string) {
     return rows.map(r => r.track);
 }
 
-export default async function PlaylistDetailPage({ params }: { params: { id: string } }) {
+export default async function PlaylistDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const playlist = await getPlaylist(id);
 

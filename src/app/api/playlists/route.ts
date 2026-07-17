@@ -8,7 +8,7 @@ export async function GET(request: Request) {
         const { searchParams } = new URL(request.url);
         const excludeTrackId = searchParams.get("excludeTrackId");
 
-        let query = db.select().from(playlists);
+        let query;
 
         if (excludeTrackId) {
             const playlistsWithTrack = db
@@ -22,6 +22,8 @@ export async function GET(request: Request) {
                     sql`(${playlistsWithTrack})`
                 )
             );
+        } else {
+            query = db.select().from(playlists);
         }
 
         const allPlaylists = await query.orderBy(desc(playlists.createdAt));
