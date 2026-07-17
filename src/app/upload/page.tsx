@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 // -------- types --------
@@ -11,6 +11,7 @@ interface UploadMeta {
     genre: string;
     tagInput: string;
     tags: string[];
+    durationSecs: number | null;
 }
 
 type UploadStatus = "idle" | "uploading" | "saving" | "done" | "error";
@@ -22,6 +23,7 @@ const EMPTY_META: UploadMeta = {
     genre: "",
     tagInput: "",
     tags: [],
+    durationSecs: null,
 };
 
 // -------- component --------
@@ -36,6 +38,11 @@ export default function UploadPage() {
     const [progress, setProgress] = useState(0);
     const [errorMsg, setErrorMsg] = useState("");
 
+    const durationRef = useRef<number | null>(null);
+    const metaRef = useRef(meta);
+    useEffect(() => {
+        metaRef.current = meta;
+    }, [meta]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -49,6 +56,8 @@ export default function UploadPage() {
         setFile(f);
         setStatus("idle");
         setProgress(0);
+        durationRef.current = null;
+        setMeta(m => ({ ...m, durationSecs: null }));
 
         if (previewUrl) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(f));
@@ -144,11 +153,12 @@ export default function UploadPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    title: meta.title || file.name,
-                    artist: meta.artist || null,
-                    album: meta.album || null,
-                    genre: meta.genre || null,
-                    tags: meta.tags.length ? meta.tags : null,
+                    title: metaRef.current.title || file.name,
+                    artist: metaRef.current.artist || null,
+                    album: metaRef.current.album || null,
+                    genre: metaRef.current.genre || null,
+                    tags: metaRef.current.tags.length ? metaRef.current.tags : null,
+                    durationSecs: durationRef.current,
                     r2Key,
                     fileName: file.name,
                     fileSizeBytes: file.size,
@@ -165,6 +175,7 @@ export default function UploadPage() {
                 if (previewUrl) URL.revokeObjectURL(previewUrl);
                 setPreviewUrl(null);
                 setMeta(EMPTY_META);
+                durationRef.current = null;
                 setStatus("idle");
                 setProgress(0);
             }, 2500);
@@ -255,6 +266,14 @@ export default function UploadPage() {
                         <audio
                             ref={audioRef}
                             src={previewUrl}
+                            onLoadedMetadata={(e) => {
+                                const d = e.currentTarget.duration;
+                                if (isFinite(d)) {
+                                    const secs = Math.floor(d);
+                                    durationRef.current = secs;
+                                    setMeta(m => ({ ...m, durationSecs: secs }));
+                                }
+                            }}
                             controls
                             className="w-full accent-cyan-400"
                         />

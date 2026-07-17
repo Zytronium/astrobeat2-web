@@ -1,6 +1,6 @@
 "use client";
 
-import {useMemo, useRef, useState} from "react";
+import {useEffect, useMemo, useRef, useState} from "react";
 import {
   MdPlayArrow,
   MdPause,
@@ -26,6 +26,19 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [currentTracks, setCurrentTracks] = useState<Track[]>(tracks);
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    setCurrentTracks(prev => {
+      return tracks.map(t => {
+        const existing = prev.find(p => p.id === t.id);
+        if (existing && existing.durationSecs && !t.durationSecs) {
+          return { ...t, durationSecs: existing.durationSecs };
+        }
+        return t;
+      });
+    });
+  }, [tracks]);
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,6 +49,42 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
   const [loop, setLoop] = useState(false);
   const [showPlaylistMenu, setShowPlaylistMenu] = useState<string | null>(null);
   const [userPlaylists, setUserPlaylists] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (busy || isPlaying) return;
+
+    const nextToDiscover = currentTracks.find(t => !t.durationSecs);
+    if (!nextToDiscover) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/tracks/${nextToDiscover.id}/stream`);
+        if (!res.ok) return;
+        const {url} = await res.json();
+
+        const tempAudio = new Audio();
+        tempAudio.preload = "metadata";
+        tempAudio.src = url;
+        tempAudio.onloadedmetadata = () => {
+          const d = Math.floor(tempAudio.duration);
+          if (isFinite(d) && d > 0) {
+            setCurrentTracks(prev => prev.map(t => t.id === nextToDiscover.id ? {...t, durationSecs: d} : t));
+            void fetch(`/api/tracks/${nextToDiscover.id}/metadata`, {
+              method: "POST",
+              headers: {"Content-Type": "application/json"},
+              body: JSON.stringify({durationSecs: d}),
+            });
+          }
+          tempAudio.src = "";
+          tempAudio.load();
+        };
+      } catch (err) {
+        // silently fail discovery
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [currentTracks, busy, isPlaying]);
 
   const fetchUserPlaylists = async (excludeTrackId?: string) => {
     try {
@@ -180,7 +229,8 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
     setSpeed(value);
   };
 
-  const formatTime = (seconds: number) => {
+  const formatTime = (seconds: number | null | undefined) => {
+    if (seconds === null || seconds === undefined) return "--:--";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
@@ -218,7 +268,27 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
         preload="metadata"
         onLoadedMetadata={() => {
           if (audioRef.current) {
-            setDuration(audioRef.current.duration);
+            const d = audioRef.current.duration;
+            setDuration(d);
+            
+            if (currentIndex !== null) {
+              const track = currentTracks[currentIndex];
+              if (track && !track.durationSecs) {
+                const secs = Math.floor(d);
+                
+                // Update local state
+                setCurrentTracks(prev => prev.map(t => 
+                  t.id === track.id ? { ...t, durationSecs: secs } : t
+                ));
+
+                // Update database
+                void fetch(`/api/tracks/${track.id}/metadata`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ durationSecs: secs }),
+                });
+              }
+            }
           }
         }}
         onTimeUpdate={() => {
@@ -320,7 +390,7 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
           <div className="flex items-center justify-center gap-4">
             <button
               onClick={() => void step(-1)}
-              disabled={busy || tracks.length === 0}
+              disabled={busy || currentTracks.length === 0}
               className="flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:bg-white/10 disabled:opacity-30"
             >
               <MdSkipPrevious size={32}/>
@@ -328,7 +398,7 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
 
             <button
               onClick={() => void togglePlay()}
-              disabled={busy || tracks.length === 0}
+              disabled={busy || currentTracks.length === 0}
               className="flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500 text-white shadow-[0_0_20px_rgba(0,255,255,0.4)] transition hover:scale-105 hover:bg-cyan-400 active:scale-95 disabled:opacity-50"
             >
               {isPlaying ? (
@@ -340,7 +410,7 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
 
             <button
               onClick={() => void step(1)}
-              disabled={busy || tracks.length === 0}
+              disabled={busy || currentTracks.length === 0}
               className="flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:bg-white/10 disabled:opacity-30"
             >
               <MdSkipNext size={32}/>
@@ -449,7 +519,7 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
                   </div>
 
                   <div className="shrink-0 font-mono text-[10px] text-blue-200/40">
-                    {track.durationSecs ? formatTime(track.durationSecs) : "--:--"}
+                    {formatTime(active && duration > 0 ? duration : track.durationSecs)}
                   </div>
                 </div>
               </div>
