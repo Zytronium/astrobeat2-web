@@ -179,31 +179,31 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                 onPlay={() => setIsPlaying(true)}
             />
 
-            <div className="flex flex-col gap-3">
-                <div className="min-w-0">
-                    <div className="text-xs uppercase tracking-wide text-cyan-300/70">
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1 min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-cyan-400/60">
                         Now playing
                     </div>
-                    <div className="truncate text-lg font-medium text-white drop-shadow-[0_0_10px_rgba(0,200,255,0.6)]">
-                        {currentTrack ? currentTrack.title : "Nothing selected"}
+                    <div className="truncate text-xl font-bold text-white drop-shadow-[0_0_8px_rgba(0,255,255,0.4)]">
+                        {currentTrack ? currentTrack.title : "Ready to play"}
                     </div>
-                    <div className="truncate text-sm text-blue-200/70">
-                        {currentTrack?.artist || "Choose a track to start"}
+                    <div className="truncate text-sm text-blue-200/60">
+                        {currentTrack?.artist || "Select a track to start listening"}
                     </div>
                 </div>
-
             </div>
 
             {error ? (
                 <p className="mt-3 text-sm text-red-300">{error}</p>
             ) : null}
 
-            <div className="mt-6 flex flex-col gap-5">
+            <div className="mt-4 flex flex-col gap-6">
 
-                <div className="flex items-center gap-3 text-sm text-blue-200/60">
-    <span className="w-10 text-right">
-      {formatTime(currentTime)}
-    </span>
+                <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between text-[11px] font-medium tabular-nums text-blue-200/50">
+                        <span>{formatTime(currentTime)}</span>
+                        <span>{formatTime(duration)}</span>
+                    </div>
 
                     <input
                         type="range"
@@ -211,92 +211,91 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                         max={duration || 0}
                         value={currentTime}
                         onChange={(e) => seek(Number(e.target.value))}
-                        className="flex-1 accent-cyan-400"
+                        className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-blue-900/50 accent-cyan-400 transition-all hover:accent-cyan-300"
                     />
-
-                    <span className="w-10">
-      {formatTime(duration)}
-    </span>
                 </div>
 
-
-                <div className="flex items-center justify-between">
-
-                    <div className="w-20" />
-
-                    <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+                    {/* Secondary Controls */}
+                    <div className="flex items-center justify-center gap-4 sm:justify-start">
                         <button
                             onClick={() => setShuffle(!shuffle)}
-                            className={`rounded-full border px-4 py-3 transition ${
+                            title="Shuffle"
+                            className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
                                 shuffle
-                                    ? "border-cyan-300 bg-cyan-400/20 text-cyan-300 shadow-[0_0_20px_rgba(0,200,255,0.6)]"
-                                    : "border-cyan-400/30 bg-blue-950/60 text-cyan-200 hover:bg-cyan-500/20 hover:text-white"
+                                    ? "bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(0,255,255,0.3)]"
+                                    : "text-blue-200/50 hover:bg-white/5 hover:text-white"
                             }`}
                         >
                             <MdShuffle size={20} />
                         </button>
+                        <button
+                            onClick={() => setLoop(!loop)}
+                            title="Repeat"
+                            className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                                loop
+                                    ? "bg-cyan-500/20 text-cyan-300 shadow-[0_0_15px_rgba(0,255,255,0.3)]"
+                                    : "text-blue-200/50 hover:bg-white/5 hover:text-white"
+                            }`}
+                        >
+                            <MdRepeat size={20} />
+                        </button>
+                        <select
+                            value={speed}
+                            onChange={(e) => changeSpeed(Number(e.target.value))}
+                            className="rounded-lg bg-blue-900/30 px-2 py-1 text-xs font-medium text-cyan-200/80 outline-none hover:bg-blue-900/50"
+                        >
+                            <option value={0.5}>0.5x</option>
+                            <option value={0.75}>0.75x</option>
+                            <option value={1}>1x</option>
+                            <option value={1.25}>1.25x</option>
+                            <option value={1.5}>1.5x</option>
+                            <option value={2}>2x</option>
+                            <option value={3}>3x</option>
+                        </select>
+                    </div>
 
+                    {/* Main Playback Controls */}
+                    <div className="flex items-center justify-center gap-4">
                         <button
                             onClick={() => void step(-1)}
                             disabled={busy || tracks.length === 0}
-                            className="rounded-full border border-white/10 bg-black/30 px-4 py-3 text-white hover:bg-white/10 disabled:opacity-40"
+                            className="flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:bg-white/10 disabled:opacity-30"
                         >
-                            <MdSkipPrevious size={22} />
+                            <MdSkipPrevious size={32} />
                         </button>
 
                         <button
                             onClick={() => void togglePlay()}
                             disabled={busy || tracks.length === 0}
-                            className="rounded-full bg-linear-to-br from-cyan-400 to-purple-600 text-white shadow-lg shadow-cyan-500/40 hover:brightness-110 px-6 py-3 font-medium hover:bg-white/90 disabled:opacity-40"
+                            className="flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500 text-white shadow-[0_0_20px_rgba(0,255,255,0.4)] transition hover:scale-105 hover:bg-cyan-400 active:scale-95 disabled:opacity-50"
                         >
                             {isPlaying ? (
-                                <MdPause size={24} />
+                                <MdPause size={36} />
                             ) : (
-                                <MdPlayArrow size={24} />
+                                <MdPlayArrow size={36} className="ml-1" />
                             )}
                         </button>
 
                         <button
                             onClick={() => void step(1)}
                             disabled={busy || tracks.length === 0}
-                            className="rounded-full border border-white/10 bg-black/30 px-4 py-3 text-white hover:bg-white/10 disabled:opacity-40"
+                            className="flex h-12 w-12 items-center justify-center rounded-full text-white transition hover:bg-white/10 disabled:opacity-30"
                         >
-                            <MdSkipNext size={22} />
-                        </button>
-
-                        <button
-                            onClick={() => setLoop(!loop)}
-                            className={`rounded-full border px-4 py-3 transition ${
-                                loop
-                                    ? "border-cyan-300 bg-cyan-400/20 text-cyan-300 shadow-[0_0_20px_rgba(0,200,255,0.6)]"
-                                    : "border-cyan-400/30 bg-blue-950/60 text-cyan-200 hover:bg-cyan-500/20 hover:text-white"
-                            }`}
-                        >
-                            <MdRepeat size={20} />
+                            <MdSkipNext size={32} />
                         </button>
                     </div>
 
-
-                    <select
-                        value={speed}
-                        onChange={(e) => changeSpeed(Number(e.target.value))}
-                        className="w-20 rounded-xl border border-purple-400/30 bg-blue-950/60 text-cyan-100 px-3 py-2"
-                    >
-                        <option value={0.5}>0.5×</option>
-                        <option value={0.75}>0.75×</option>
-                        <option value={1}>1×</option>
-                        <option value={1.25}>1.25×</option>
-                        <option value={1.5}>1.5×</option>
-                        <option value={2}>2×</option>
-                        <option value={3}>3×</option>
-                    </select>
-
+                    {/* Spacer for desktop layout balance */}
+                    <div className="hidden w-40 sm:block" />
                 </div>
-
             </div>
 
             {tracks.length > 0 ? (
-                <div className="mt-5 grid gap-2">
+                <div className="mt-8 flex flex-col gap-2">
+                    <div className="mb-2 px-1 text-[10px] font-bold uppercase tracking-widest text-cyan-400/60">
+                        Library ({tracks.length})
+                    </div>
                     {tracks.map((track, index) => {
                         const active = index === currentIndex;
                         return (
@@ -304,23 +303,22 @@ export default function TrackPlayer({ tracks }: { tracks: Track[] }) {
                                 key={track.id}
                                 onClick={() => void playTrack(index)}
                                 className={[
-                                    "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition",
+                                    "flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all active:scale-[0.98]",
                                     active
-                                        ? "border-cyan-400/60 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 shadow-lg shadow-cyan-500/20"
-                                        : "border-cyan-500/20 bg-blue-950/25 hover:bg-cyan-500/10",
+                                        ? "border-cyan-400/60 bg-cyan-500/10 shadow-sm"
+                                        : "border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10",
                                 ].join(" ")}
                             >
                                 <div className="min-w-0">
-                                    <div className="truncate text-sm font-medium text-cyan-50">
+                                    <div className={["truncate text-sm font-medium transition-colors", active ? "text-cyan-300" : "text-white"].join(" ")}>
                                         {track.title}
                                     </div>
-                                    <div className="truncate text-xs text-blue-200/70">
-                                        {track.artist || "Unknown artist"}
-                                        {track.album ? ` • ${track.album}` : ""}
+                                    <div className="truncate text-xs text-blue-200/50">
+                                        {track.artist || "Unknown Artist"}
                                     </div>
                                 </div>
-                                <div className="ml-4 shrink-0 text-xs text-purple-200/70">
-                                    {track.durationSecs ? `${Math.round(track.durationSecs)}s` : "—"}
+                                <div className="ml-4 shrink-0 font-mono text-[10px] text-blue-200/40">
+                                    {track.durationSecs ? formatTime(track.durationSecs) : "--:--"}
                                 </div>
                             </button>
                         );
