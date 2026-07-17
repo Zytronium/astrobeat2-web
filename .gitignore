@@ -24,6 +24,7 @@
 .DS_Store
 *.pem
 .idea/
+/drizzle/
 
 # debug
 npm-debug.log*

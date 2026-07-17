@@ -38,3 +38,20 @@ export const deviceCache = pgTable("device_cache", {
     lastVerifiedAt:timestamp("last_verified_at"),     // last time the app confirmed file is still on disk
     isEvicted:     boolean("is_evicted").default(false).notNull(), // true = purged from device
 });
+
+// -------- playlists --------
+export const playlists = pgTable("playlists", {
+    id:          uuid("id").primaryKey().defaultRandom(),
+    name:        text("name").notNull(),
+    description: text("description"),
+    createdAt:   timestamp("created_at").defaultNow().notNull(),
+});
+
+// -------- playlist_tracks --------
+// Junction table for many-to-many relationship
+export const playlistTracks = pgTable("playlist_tracks", {
+    id:         uuid("id").primaryKey().defaultRandom(),
+    playlistId: uuid("playlist_id").references(() => playlists.id, { onDelete: "cascade" }).notNull(),
+    trackId:    uuid("track_id").references(() => tracks.id, { onDelete: "cascade" }).notNull(),
+    addedAt:    timestamp("added_at").defaultNow().notNull(),
+});
