@@ -342,7 +342,12 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
             max={duration || 0}
             value={currentTime}
             onChange={(e) => seek(Number(e.target.value))}
-            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-blue-900/50 accent-cyan-400 transition-all hover:accent-cyan-300"
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg accent-cyan-400 transition-all hover:accent-cyan-300"
+            style={{
+              background: `linear-gradient(to right, rgb(34 211 238) ${
+                duration ? (currentTime / duration) * 100 : 0
+              }%, rgb(30 58 138 / 0.5) 0%)`,
+            }}
           />
         </div>
 
