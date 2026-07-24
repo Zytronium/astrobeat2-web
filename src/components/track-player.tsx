@@ -221,6 +221,48 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
     setCurrentTime(value);
   };
 
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    if (!currentTrack) {
+      navigator.mediaSession.metadata = null;
+      return;
+    }
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: currentTrack.title,
+      artist: currentTrack.artist || "Unknown Artist",
+      album: currentTrack.album || undefined,
+    });
+  }, [currentTrack]);
+
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.playbackState = isPlaying ? "playing" : "paused";
+  }, [isPlaying]);
+
+  // -------- media session action handlers --------
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.setActionHandler("play", () => void togglePlay());
+    navigator.mediaSession.setActionHandler("pause", () => void togglePlay());
+    navigator.mediaSession.setActionHandler("nexttrack", () => void step(1));
+    navigator.mediaSession.setActionHandler("previoustrack", () => void step(-1));
+    navigator.mediaSession.setActionHandler("seekto", (details) => {
+      if (details.seekTime !== undefined) seek(details.seekTime);
+    });
+
+    return () => {
+      navigator.mediaSession.setActionHandler("play", null);
+      navigator.mediaSession.setActionHandler("pause", null);
+      navigator.mediaSession.setActionHandler("nexttrack", null);
+      navigator.mediaSession.setActionHandler("previoustrack", null);
+      navigator.mediaSession.setActionHandler("seekto", null);
+    };
+  }, [currentTracks, currentIndex, shuffle, isPlaying]);
+
   const changeSpeed = (value: number) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -270,14 +312,14 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
           if (audioRef.current) {
             const d = audioRef.current.duration;
             setDuration(d);
-            
+
             if (currentIndex !== null) {
               const track = currentTracks[currentIndex];
               if (track && !track.durationSecs) {
                 const secs = Math.floor(d);
-                
+
                 // Update local state
-                setCurrentTracks(prev => prev.map(t => 
+                setCurrentTracks(prev => prev.map(t =>
                   t.id === track.id ? { ...t, durationSecs: secs } : t
                 ));
 
