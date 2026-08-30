@@ -10,6 +10,9 @@ import {
   MdRepeat,
   MdPlaylistAdd,
   MdDeleteOutline,
+  MdVolumeDown,
+  MdVolumeOff,
+  MdVolumeUp,
 } from "react-icons/md";
 
 type Track = {
@@ -45,10 +48,17 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [speed, setSpeed] = useState(1);
+  const [volume, setVolume] = useState(1);
   const [shuffle, setShuffle] = useState(false);
   const [loop, setLoop] = useState(false);
   const [showPlaylistMenu, setShowPlaylistMenu] = useState<string | null>(null);
   const [userPlaylists, setUserPlaylists] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   useEffect(() => {
     if (busy || isPlaying) return;
@@ -271,6 +281,14 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
     setSpeed(value);
   };
 
+  const changeVolume = (value: number) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = value;
+    setVolume(value);
+  };
+
   const formatTime = (seconds: number | null | undefined) => {
     if (seconds === null || seconds === undefined) return "--:--";
     const mins = Math.floor(seconds / 60);
@@ -464,8 +482,24 @@ export default function TrackPlayer({tracks, playlistId}: { tracks: Track[]; pla
             </button>
           </div>
 
-          {/* Spacer for desktop layout balance */}
-          <div className="hidden w-40 sm:block"/>
+          <div className="flex w-full items-center justify-center gap-2 sm:w-40 sm:justify-end">
+            <span className="text-blue-200/50">
+              {volume === 0 ? <MdVolumeOff size={20}/> : volume < 0.5 ? <MdVolumeDown size={20}/> : <MdVolumeUp size={20}/>} 
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={volume}
+              aria-label="Volume"
+              onChange={(e) => changeVolume(Number(e.target.value))}
+              className="h-1.5 w-28 cursor-pointer appearance-none rounded-lg accent-cyan-400 transition-all hover:accent-cyan-300"
+              style={{
+                background: `linear-gradient(to right, rgb(34 211 238) ${volume * 100}%, rgb(30 58 138 / 0.5) 0%)`,
+              }}
+            />
+          </div>
         </div>
       </div>
 
